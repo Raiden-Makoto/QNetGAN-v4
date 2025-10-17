@@ -131,7 +131,7 @@ torch-geometric==2.7.0
 torchaudio==2.9.0
 torchvision==0.24.0
 tornado==6.5.2
-tqdm==4.66.1
+tqdm==4.66.3
 traitlets==5.14.3
 types-python-dateutil==2.9.0.20251008
 typing_extensions==4.15.0
