@@ -18,13 +18,17 @@ from utils.constants import (
     LUMO_STD,
     ZPVE_MEAN,
     ZPVE_STD,
-    GAP_MEAN,
-    GAP_STD
 )
 
+def pad_adjacency_matrix(adj: np.ndarray, target_size: int = 16) -> Optional[np.ndarray]:
+    current_size = adj.shape[0]
+    if current_size > target_size: return None
+    if current_size == target_size: return adj
+    padded = np.zeros((target_size, target_size))
+    padded[:current_size, :current_size] = adj
+    return padded
 
-
-def normalized_adjacency_matrix(smiles: str) -> Optional[np.ndarray]:
+def normalized_adjacency_matrix(smiles: str, pad_to: int = 16) -> Optional[np.ndarray]:
     mol = Chem.MolFromSmiles(smiles)
     if mol is None:
         warnings.warn(f"Could not convert {smiles} to a molecule.")
@@ -36,10 +40,11 @@ def normalized_adjacency_matrix(smiles: str) -> Optional[np.ndarray]:
     deg = lap + adj # degree matrix = laplacian + adjacency
     deg_inv = fractional_matrix_power(deg, -0.5)
     normalized = deg_inv @ adj @ deg_inv
-    return normalized
+    padded = pad_adjacency_matrix(normalized, pad_to)
+    return padded
 
-def adjacency_with_props(smiles: str, props: Dict) -> Tuple[Optional[np.ndarray], Dict]:
-    adj = normalized_adjacency_matrix(smiles)
+def adjacency_with_props(smiles: str, props: Dict, pad_to: int = 16) -> Tuple[Optional[np.ndarray], Dict]:
+    adj = normalized_adjacency_matrix(smiles, pad_to)
     if adj is None:
         return None, {}
     
@@ -49,6 +54,5 @@ def adjacency_with_props(smiles: str, props: Dict) -> Tuple[Optional[np.ndarray]
     props['homo'] = (props['homo'] - HOMO_MEAN) / HOMO_STD
     props['lumo'] = (props['lumo'] - LUMO_MEAN) / LUMO_STD
     props['zpve'] = (props['zpve'] - ZPVE_MEAN) / ZPVE_STD
-    props['gap'] = (props['gap'] - GAP_MEAN) / GAP_STD
     
     return adj, props

@@ -20,7 +20,3 @@ LUMO_STD = 0.046936
 # Zero-point vibrational energy (ZPVE) - Hartree
 ZPVE_MEAN = 0.148524
 ZPVE_STD = 0.033274
-
-# HOMO-LUMO gap - Hartree
-GAP_MEAN = 0.251100
-GAP_STD = 0.047519
