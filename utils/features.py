@@ -1,7 +1,10 @@
 import pennylane as qml
 import pennylane.numpy as np
 
-from typing import Dict
+from typing import Dict, List
+from utils.adjacency import adjacency_with_props
+
+MAX_ATOMS = 16
 
 def permutation_invariant_encoding(
     adj: np.ndarray,
@@ -35,4 +38,14 @@ def permutation_invariant_encoding(
         qml.IsingXX(mu_scale * 0.1, wires=[i, i+1])
         qml.IsingYY(alpha_scale * 0.1, wires=[i, i+1])
 
-#def embedding_circuit(adj :np.ndarray, betas: np.ndarray, gammas: np.ndarray):
+device = qml.device('default.qubit', wires=MAX_ATOMS)
+@qml.qnode(device, interface='autograd') # use autograd for integration with MLX
+def make_circuit(
+    adj: np.ndarray,
+    betas: np.ndarray,
+    gammas: np.ndarray,
+    props: Dict,
+    prop_weights: np.ndarray
+) -> np.ndarray:
+    permutation_invariant_encoding(adj, betas, gammas, props, prop_weights)
+    return [qml.expval(qml.PauliZ(i)) for i in range(adj.shape[0])]
