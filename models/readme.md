@@ -37,28 +37,67 @@ mlx_embeddings = encoder.pennylane_to_mlx(embeddings)  # Convert to MLX
 
 ---
 
-### 2. GeneratorMLX.py ⏳ **NOT IMPLEMENTED**
+### 2. GeneratorMLX.py ✅ **IMPLEMENTED**
 
-**Purpose**: MLX-based generator that creates molecular embeddings from noise.
+**Purpose**: MLX-based generator that creates molecular graphs from quantum embeddings.
 
-**Planned Features**:
-- Input: Random noise vectors
-- Output: Generated molecular embeddings (16-dimensional)
+**Key Features**:
+- Takes quantum embeddings from FeatureEncoder as input
+- Generates both node types and edge types for molecular graphs
+- Uses mixed graph neural network architecture (GCNConv + GATv2Conv)
+- Supports batch processing with proper tensor reshaping
 - Framework: MLX (Apple Silicon optimized)
-- Integration: Works with FeatureEncoder embeddings
 
-**Architecture**: *To be implemented*
+**Architecture**:
+- Input: Quantum embeddings `(batch_size, 16)` from FeatureEncoder
+- Projection: Linear layer to hidden dimension `(batch_size, 64)`
+- Graph Processing: GCNConv → GCNConv → GATv2Conv → GCNConv
+- Node Prediction: MLP for atom types `(batch_size, 16, 5)`
+- Edge Prediction: MLP for bond types `(batch_size, 16, 16, 4)`
+- Residual connections and attention mechanisms
+
+**Usage**:
+```python
+generator = GeneratorMLX(
+    latent_dim=16,      # Match FeatureEncoder output
+    hidden_dim=64,
+    num_layers=4,
+    num_heads=4,
+    num_nodes=16,
+    num_atom_types=5,
+    num_bond_types=4
+)
+node_logits, edge_logits = generator(quantum_embeddings)
+```
 
 ---
 
-### 3. DiscriminatorMLX.py ⏳ **NOT IMPLEMENTED**
+### 3. DiscriminatorMLX.py ✅ **IMPLEMENTED**
 
-**Purpose**: MLX-based discriminator that distinguishes between real and generated molecular embeddings.
+**Purpose**: MLX-based discriminator that distinguishes between real and generated molecular graphs.
 
-**Planned Features**:
-- Input: Molecular embeddings (real or generated)
-- Output: Probability score (real vs fake)
+**Key Features**:
+- Takes node features and adjacency matrices as input
+- Converts adjacency matrices to edge_index format for GCNConv
+- Uses mixed graph neural network architecture (GCNConv + GATv2Conv)
+- Supports batch processing with different graph structures
 - Framework: MLX (Apple Silicon optimized)
-- Integration: Works with FeatureEncoder and GeneratorMLX outputs
 
-**Architecture**: *To be implemented*
+**Architecture**:
+- Input: Node features `(batch_size, 16, 5)` and adjacency matrix `(batch_size, 16, 16)`
+- Edge Index Conversion: Adjacency matrix → edge_index format
+- Graph Processing: GCNConv → GCNConv → GATv2Conv
+- Graph Pooling: Mean aggregation across nodes
+- Classification: MLP for real/fake prediction `(batch_size, 1)`
+
+**Usage**:
+```python
+discriminator = DiscriminatorMLX(
+    num_heads=4,
+    num_atom_types=5,
+    num_bond_types=4,
+    latent_dim=64,
+    hidden_dim=128
+)
+rf_logits = discriminator(node_features, adjacency_matrix)
+```
